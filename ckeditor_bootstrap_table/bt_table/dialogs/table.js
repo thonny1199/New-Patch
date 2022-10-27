@@ -70,8 +70,9 @@
 
         if (command == 'tableProperties') {
           var selected = selection.getSelectedElement();
-          if (selected && selected.is('table'))
+          if (selected && selected.is('table')) {
             table = selected;
+          }
           else if (ranges.length > 0) {
             // Webkit could report the following range on cell selection (#4948):
             // <table><tr><td>[&nbsp;</td></tr></table>]
@@ -135,8 +136,9 @@
           // Should we make a <thead>?
           var headers = info.selHeaders;
           var theadStyle = info.theadStyle;
+
+          var thead = new CKEDITOR.dom.element(table.$.createTHead());
           if (!table.$.tHead && (headers == 'row' || headers == 'both')) {
-            var thead = new CKEDITOR.dom.element(table.$.createTHead());
             tbody = table.getElementsByTag('tbody').getItem(0);
             var theRow = tbody.getElementsByTag('tr').getItem(0);
 
@@ -150,9 +152,11 @@
               }
             }
             thead.append(theRow.remove());
-            if (theadStyle == 'thead-dark' || theadStyle == 'thead-light') {
-              thead.addClass(theadStyle);
-            }
+          }
+
+          if (theadStyle == 'thead-dark' || theadStyle == 'thead-light' || theadStyle == 'none') {
+            thead.removeAttribute('class');
+            thead.addClass(theadStyle);
           }
 
           if (table.$.tHead !== null && !(headers == 'row' || headers == 'both')) {
@@ -329,23 +333,25 @@
               id: 'theadStyle',
               requiredContent: 'th',
               label: 'Headers style',
-              items: [ ['None', '' ], ['Dark theme', 'thead-dark' ], [ 'Light theme', 'thead-light' ] ],
+              items: [['None', ''], ['Dark theme', 'thead-dark'], ['Light theme', 'thead-light']],
               'default': '',
-              setup: function (selectedTable) {
+              setup: function(selectedTable) {
                 this.enable();
-                var val = selectedTable.hasClass(this.getValue());
-                this.setValue(val);
+
+                if (selectedTable.$?.tHead?.className == 'thead-dark' || selectedTable.$?.tHead?.className == 'thead-light') {
+                  this.setValue(selectedTable.$.tHead?.className);
+                }
               },
               commit: commitValue
             },
-              {
-                type: 'html',
-                id: 'txtBorder',
-                html: '&nbsp;',
-                commit: function() {
-                  // We can remove it after changing the name of this plugin.
-                }
+            {
+              type: 'html',
+              id: 'txtBorder',
+              html: '&nbsp;',
+              commit: function() {
+                // We can remove it after changing the name of this plugin.
               }
+            }
             ]
           }, {
             type: 'hbox',
@@ -408,7 +414,7 @@
                   'default': '',
                   setup: function (selectedTable) {
                     this.enable();
-                    var val = selectedTable.hasClass('table-small');
+                    var val = selectedTable.hasClass('table-sm');
                     this.setValue(val);
                   },
                   commit: commitValue
